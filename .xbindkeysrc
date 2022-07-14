@@ -1,0 +1,17 @@
+
+
+# Increase Volume
+  "pactl set-sink-volume @DEFAULT_SINK@ +2% && volnoti-show $(pactl get-sink-volume @DEFAULT_SINK@ | grep -Po "[0-9]+(?=%)" | tail -1)"
+    XF86AudioRaiseVolume
+
+# Decrease Volume
+  "pactl set-sink-volume @DEFAULT_SINK@ -2% && volnoti-show $(pactl get-sink-volume @DEFAULT_SINK@ | grep -Po "[0-9]+(?=%)" | tail -1)"
+    XF86AudioLowerVolume
+
+# Mute Volume
+  "pactl set-sink-mute @DEFAULT_SINK@ toggle; if pactl get-sink-mute @DEFAULT_SINK@ | grep -Fq "yes"; then volnoti-show -m; else volnoti-show $(pactl get-sink-volume @DEFAULT_SINK@ | grep -Po "[0-9]+(?=%)" | tail -1); fi"
+    XF86AudioMute
+
+# Mute Microphone
+  "pactl set-source-mute @DEFAULT_SOURCE@ toggle"
+    XF86AudioMicMute
