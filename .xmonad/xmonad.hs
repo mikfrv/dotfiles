@@ -8,28 +8,37 @@
 
 --- Base ---
 import XMonad
-import System.Exit
 import qualified XMonad.StackSet as W
+import System.Exit
 
 --- Data ---
 import Data.Monoid
 import qualified Data.Map        as M
 import Data.Char (toLower)
+
 --- Hooks ---
 import XMonad.Hooks.DynamicLog
+import XMonad.Hooks.StatusBar
+import XMonad.Hooks.StatusBar.PP
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.EwmhDesktops
 
 --- Layouts ---
 import XMonad.Layout.ThreeColumns
 import XMonad.Layout.Spacing
-import XMonad.Layout.Magnifier
 import XMonad.Layout.LayoutModifier
 import XMonad.Layout.NoBorders
+import XMonad.Layout.Renamed
+import XMonad.Layout.MultiToggle as MT
+import XMonad.Layout.MultiToggle.Instances
+
 --- Utilities ---
 import XMonad.Util.Run
 import XMonad.Util.SpawnOnce
 import XMonad.Util.Loggers
+import XMonad.Util.EZConfig
+import XMonad.Util.Ungrab
+import XMonad.Util.ClickableWorkspaces
 
 --- Color Schemes ---
 import Colors.SolarizedDark
@@ -42,10 +51,8 @@ import Colors.SolarizedDark
 main = xmonad
      . docks
      . ewmh
-   =<< statusBar "xmobar" myXmobarPP toggleStrutsKey myDesktopConfig
-	where
-	  toggleStrutsKey :: XConfig Layout -> (KeyMask, KeySym)
-	  toggleStrutsKey XConfig{ modMask = m } = (m, xK_b)
+     . withSB (statusBarProp "xmobar" (pure myXmobarPP))
+     $ myDesktopConfig `additionalKeysP` myKeymaps
 
 -- My Desktop Overrides
 myDesktopConfig = def {
@@ -60,7 +67,6 @@ myDesktopConfig = def {
         focusedBorderColor = myFocusColor,
 
       -- key bindings
-        keys               = myKeys,
         mouseBindings      = myMouseBindings,
 
       -- hooks, layouts
@@ -120,13 +126,29 @@ mySpacing i  = spacingRaw False (Border i i i i) True (Border i i i i) True
 -- The available layouts.  Note that each layout is separated by |||,
 -- which denotes layout choice.
 --
-myLayout = mySpacing 6 $ avoidStruts $ smartBorders $ (tiled ||| Mirror tiled ||| Full ||| threeCol)
-  where
-     threeCol = ThreeColMid nmaster delta ratio
-     tiled    = Tall nmaster delta ratio -- default tiling algorithm partitions the screen into two panes
-     nmaster  = 1                        -- The default number of windows in the master pane
-     ratio    = 1/2                      -- Default proportion of screen occupied by master pane
-     delta    = 3/100                    -- Percent of screen to increment by when resizing panes
+myLayout = avoidStruts
+	 $ mkToggle (NBFULL ?? NOBORDERS ?? EOT)
+         $ tall ||| wide ||| threeCol ||| full
+
+tall     = renamed [Replace "tall"]
+         $ smartBorders
+	 $ mySpacing 6
+         $ Tall 1 (3/100) (1/2)
+
+wide     = renamed [Replace "wide"]
+         $ smartBorders
+	 $ mySpacing 6
+         $ Mirror $ Tall 1 (3/100) (1/2)
+
+threeCol = renamed [Replace "mid column"]
+         $ smartBorders
+	 $ mySpacing 6
+	 $ ThreeColMid 1 (3/100) (1/2)
+
+full     = renamed [Replace "full"]
+         $ smartBorders
+	 $ mySpacing 6
+         $ Full
 
 ------------------------------------------------------------------------
 -- // Window rules
@@ -149,7 +171,8 @@ myManageHook = composeAll
     , className =? "Gimp"               --> doFloat
     , resource  =? "desktop_window"     --> doIgnore
     , resource  =? "kdesktop"           --> doIgnore
-    , title  =? "Picture-in-Picture" --> doFloat
+    , title     =? "Picture-in-Picture" --> doFloat
+    , title     =? "Zotero Preferences" --> doFloat
     , className =? "Steam" <&&> title =? "Steam - News*" --> doFloat
     , className =? "Steam" <&&> title =? "Friends List" --> doFloat ]
 
@@ -183,9 +206,10 @@ myXmobarPP = xmobarPP
 			("<box type=Bottom width=2 mb=2 color=" ++ colorFG ++ ">") "</box>"
   , ppHiddenNoWindows = xmobarColor colorFG ""
   , ppTitle           = xmobarColor colorFG "" . shorten 30 . map toLower
+  , ppLayout          = map toLower
   , ppSep             = "<fc=" ++ color11 ++ "> <fn=1>  |  </fn> </fc>"
   , ppWsSep           = xmobarColor color11 "" "     "
-  , ppOrder           = \(ws:l:t:ex) -> [ws]++ex++[t]
+  , ppOrder           = \(ws:l:t:ex) -> [ws,l]++ex++[t]
 }
 ------------------------------------------------------------------------
 -- //  Startup hook
@@ -205,99 +229,11 @@ myStartupHook = do
 -- //  Key bindings. Add, modify or remove key bindings here.
 ------------------------------------------------------------------------
 
-myKeys conf@(XConfig {XMonad.modMask = modm}) = M.fromList $
-
-    -- launch a terminal
-    [ ((modm .|. shiftMask, xK_Return), spawn $ XMonad.terminal conf)
-
-    -- launch dmenu
-    , ((modm,               xK_p     ), spawn "dmenu_run")
-
-    -- launch gmrun
-    , ((modm .|. shiftMask, xK_p     ), spawn "gmrun")
-
-    -- close focused window
-    , ((modm .|. shiftMask, xK_c     ), kill)
-
-     -- Rotate through the available layout algorithms
-    , ((modm,               xK_space ), sendMessage NextLayout)
-
-    --  Reset the layouts on the current workspace to default
-    , ((modm .|. shiftMask, xK_space ), setLayout $ XMonad.layoutHook conf)
-
-    -- Resize viewed windows to the correct size
-    , ((modm,               xK_n     ), refresh)
-
-    -- Move focus to the next window
-    , ((modm,               xK_Tab   ), windows W.focusDown)
-
-    -- Move focus to the next window
-    , ((modm,               xK_j     ), windows W.focusDown)
-
-    -- Move focus to the previous window
-    , ((modm,               xK_k     ), windows W.focusUp  )
-
-    -- Move focus to the master window
-    , ((modm,               xK_m     ), windows W.focusMaster  )
-
-    -- Swap the focused window and the master window
-    , ((modm,               xK_Return), windows W.swapMaster)
-
-    -- Swap the focused window with the next window
-    , ((modm .|. shiftMask, xK_j     ), windows W.swapDown  )
-
-    -- Swap the focused window with the previous window
-    , ((modm .|. shiftMask, xK_k     ), windows W.swapUp    )
-
-    -- Shrink the master area
-    , ((modm,               xK_h     ), sendMessage Shrink)
-
-    -- Expand the master area
-    , ((modm,               xK_l     ), sendMessage Expand)
-
-    -- Push window back into tiling
-    , ((modm,               xK_t     ), withFocused $ windows . W.sink)
-
-    -- Increment the number of windows in the master area
-    , ((modm              , xK_comma ), sendMessage (IncMasterN 1))
-
-    -- Deincrement the number of windows in the master area
-    , ((modm              , xK_period), sendMessage (IncMasterN (-1)))
-
-    -- Toggle the status bar gap
-    -- Use this binding with avoidStruts from Hooks.ManageDocks.
-    -- See also the statusBar function from Hooks.DynamicLog.
-    --
-    -- , ((modm              , xK_b     ), sendMessage ToggleStruts)
-
-    -- Quit xmonad
-    , ((modm .|. shiftMask, xK_q     ), io (exitWith ExitSuccess))
-
-    -- Restart xmonad
-    , ((modm              , xK_q     ), spawn "xmonad --recompile; xmonad --restart")
-
-    -- Run xmessage with a summary of the default keybindings (useful for beginners)
-    , ((modm .|. shiftMask, xK_slash ), spawn ("echo \"" ++ help ++ "\" | xmessage -file -"))
+myKeymaps = 
+    [
+      -- Toggle on fullscreen with no borders
+      ("M-f", sendMessage (MT.Toggle NBFULL) >> sendMessage ToggleStruts)
     ]
-    ++
-
-    --
-    -- mod-[1..9], Switch to workspace N
-    -- mod-shift-[1..9], Move client to workspace N
-    --
-    [((m .|. modm, k), windows $ f i)
-        | (i, k) <- zip (XMonad.workspaces conf) [xK_1 .. xK_9]
-        , (f, m) <- [(W.greedyView, 0), (W.shift, shiftMask)]]
-    ++
-
-    --
-    -- mod-{w,e,r}, Switch to physical/Xinerama screens 1, 2, or 3
-    -- mod-shift-{w,e,r}, Move client to screen 1, 2, or 3
-    --
-    [((m .|. modm, key), screenWorkspace sc >>= flip whenJust (windows . f))
-        | (key, sc) <- zip [xK_w, xK_e, xK_r] [0..]
-        , (f, m) <- [(W.view, 0), (W.shift, shiftMask)]]
-
 
 ------------------------------------------------------------------------
 -- //  Mouse bindings: default actions bound to mouse events

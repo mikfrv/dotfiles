@@ -20,10 +20,10 @@ Config { font = "xft:Ubuntu:weight=bold:pixelsize=16:antialias=true:hinting=true
                     , Run Memory ["-t", "<fn=1>\xf233</fn>   ram: <used>M (<usedratio>%)"] 10
                     , Run Com "uname" ["-r"] "" 36000
                     , Run Date "<fn=1>\xf133</fn>   %d %b %Y - (%H:%M)" "date" 50
-		    , Run StdinReader
+		    , Run UnsafeXMonadLog
                     ]
        , sepChar = "%"
        , alignSep = "}{"
-       , template = " <icon=haskell_20.xpm/>   %StdinReader%}\
+       , template = " <icon=haskell_20.xpm/>   %UnsafeXMonadLog%}\
                     \{ <fc=#839496>%uname%</fc>  <fn=1>|</fn>  <fc=#859900>%cpu%</fc>  <fn=1>|</fn>  <fc=#b58900>%memory%</fc>  <fn=1>|</fn>  <fc=#2aa198>%wlp6s0%</fc>  <fn=1>|</fn>  <fc=#eee8d5>%date%</fc>  "
        }
