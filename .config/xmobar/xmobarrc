@@ -1,5 +1,5 @@
 Config { font = "xft:Ubuntu:weight=bold:pixelsize=16:antialias=true:hinting=true"
-       , additionalFonts = ["xft:Mononoki Nerd Font:pixelsize=11:antialias=true:hinting=true"]
+       , additionalFonts = ["xft:Mononoki Nerd Font:pixelsize=14:antialias=true:hinting=true"]
        , borderColor = "white"
        , border = NoBorder
        , bgColor = "#002b36"
@@ -15,15 +15,14 @@ Config { font = "xft:Ubuntu:weight=bold:pixelsize=16:antialias=true:hinting=true
        , iconRoot = ".xmonad/xpm/"
        , allDesktops = True
        , overrideRedirect = True
-       , commands = [ Run Cpu ["-t", "<fn=1>\xf108</fn>   cpu: (<total>%)", "-H", "50", "--high", "red"] 20
-		    , Run Network "wlp6s0" ["-t", "<fn=1>\xf0aa</fn>  <rx>kb  <fn=1>\xf0ab</fn>  <tx>kb"] 20
-                    , Run Memory ["-t", "<fn=1>\xf233</fn>   ram: <used>M (<usedratio>%)"] 10
+       , commands = [ Run Cpu ["-t", "<fn=1>\xf085</fn>   CPU: (<total>%)", "-H", "50", "--high", "red"] 20
+                    , Run Memory ["-t", "<fn=1>\xf233</fn>   RAM: <used>M (<usedratio>%)"] 10
                     , Run Com "uname" ["-r"] "" 36000
-                    , Run Date "<fn=1>\xf133</fn>   %d %b %Y - (%H:%M)" "date" 50
+                    , Run Date "<fn=1>\xf073</fn>   %Y-%m-%d  <fn=1>\xf64f</fn>  %H:%M" "date" 50
 		    , Run UnsafeXMonadLog
                     ]
        , sepChar = "%"
        , alignSep = "}{"
        , template = " <icon=haskell_20.xpm/>   %UnsafeXMonadLog%}\
-                    \{ <fc=#839496>%uname%</fc>  <fn=1>|</fn>  <fc=#859900>%cpu%</fc>  <fn=1>|</fn>  <fc=#b58900>%memory%</fc>  <fn=1>|</fn>  <fc=#2aa198>%wlp6s0%</fc>  <fn=1>|</fn>  <fc=#eee8d5>%date%</fc>  "
+                    \{<fc=#859900>%cpu%</fc>  <fn=1>|</fn>  <fc=#b58900>%memory%</fc>  <fn=1>|</fn> <fn=1></fn>  <fc=#839496>%uname%</fc>  <fn=1>|</fn>  <fc=#eee8d5>%date%</fc>  "
        }

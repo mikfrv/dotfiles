@@ -39,6 +39,7 @@ import XMonad.Util.Loggers
 import XMonad.Util.EZConfig
 import XMonad.Util.Ungrab
 import XMonad.Util.ClickableWorkspaces
+import XMonad.Util.Hacks as Hacks
 
 --- Color Schemes ---
 import Colors.SolarizedDark
@@ -85,12 +86,10 @@ myTerminal :: String
 myTerminal = "alacritty"  -- Sets the preferred terminal
 
 myBrowser :: String
-myBrowser = "firefox"
+myBrowser = "brave"
 
-myModMask :: KeyMask     -- Select only one!
+myModMask :: KeyMask 
 myModMask = mod4Mask     -- Super_L
---myModMask = mod1Mask     -- L_Alt
---myModmask = mod3Mask     -- R_Alt
 
 myBorderWidth :: Dimension
 myBorderWidth = 2   -- Pixel width of the window border
@@ -108,7 +107,7 @@ myClickJustFocuses :: Bool
 myClickJustFocuses = False -- Whether clicking on a window to focus also passes the click to the window
 
 -- Workspaces can be set to any string for naming purposes.
-myWorkspaces    = ["main","web","dev","doc","chat","media","game","virt","sys"]
+myWorkspaces    = ["main","web","dev","doc","comm","game","misc","virt","sys"]
 
 mySpacing :: Integer -> l a -> XMonad.Layout.LayoutModifier.ModifiedLayout Spacing l a
 mySpacing i  = spacingRaw False (Border i i i i) True (Border i i i i) True
@@ -167,14 +166,10 @@ full     = renamed [Replace "full"]
 -- 'className' and 'resource' are used below.
 --
 myManageHook = composeAll
-    [ className =? "MPlayer"            --> doFloat
-    , className =? "Gimp"               --> doFloat
-    , resource  =? "desktop_window"     --> doIgnore
-    , resource  =? "kdesktop"           --> doIgnore
+    [ className =? "Gimp"               --> doFloat
     , title     =? "Picture-in-Picture" --> doFloat
-    , title     =? "Zotero Preferences" --> doFloat
-    , className =? "Steam" <&&> title =? "Steam - News*" --> doFloat
-    , className =? "Steam" <&&> title =? "Friends List" --> doFloat ]
+    , className =? "Zotero" <&&> title =? "Zotero Preferences" --> doFloat
+    , className =? "Steam"  <&&> title =? "Friends List"       --> doFloat ]
 
 ------------------------------------------------------------------------
 -- //  Event handling
@@ -186,7 +181,10 @@ myManageHook = composeAll
 -- return (All True) if the default handler is to be run afterwards. To
 -- combine event hooks use mappend or mconcat from Data.Monoid.
 --
-myEventHook = mempty
+-- windowedFullscreenFixEventHook fixes the problem of chromium-based
+-- browsers not respecting the allotted window space in fullscreen video.
+
+myEventHook = handleEventHook def <+> Hacks.windowedFullscreenFixEventHook
 
 ------------------------------------------------------------------------
 -- //  Status bars and logging
